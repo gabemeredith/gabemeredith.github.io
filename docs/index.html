@@ -18,9 +18,9 @@
     <div class="topnav">
         <nav>
             <ul>
-            <li><a href="index.html">Home</a> </li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#projects">My Projects</a></li>
+            <li><a href="index.html" class="button nav-button">Home</a> </li>
+            <li><a href="#about" class="button nav-button">About</a></li>
+            <li><a href="#projects" class="button nav-button">My Projects</a></li>
            </ul>
        
         </nav>
@@ -35,7 +35,7 @@
 <section class="hero"> 
     <!-- Maybe get an image?-->
      <h1 class="hero-intro">Hey, I'm Gabriel Meredith.</h1>
-     <h2 class="hero-subheading"> High School senior passionate about <span id="dynamic-text"></span> </h2>
+     <h2 class="hero-subheading"> Freshman @ Cornell University Passionate about <span id="dynamic-text"></span> </h2>
      <script src="dynamicheading.js"></script>
      <a href="#projects" class="project-button">Checkout some of my projects!</a>
      
@@ -43,6 +43,52 @@
 <!-- <div id="blob"></div>
     <script src="blob.js"></script> -->
 <!-- About Portion-->
+<canvas id="matrix">
+  <script src="bg.js"></script>
+</canvas>
+
+<section id="about" class="about-section">
+  <div class="about-wrap">
+    <div class="about-photo">
+      <!-- replace with your photo -->
+      <img src="/Images/3BD944F0-4C94-47FC-AECF-52B70182DF54_1_201_a.jpeg" alt="Photo of Gabe" />
+    </div>
+
+    <div class="about-card">
+      <div class="about-card__header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="title">about_me.js</span>
+      </div>
+
+      <div class="about-card__body">
+<pre>// Hi, I'm Gabe 👋
+const me = {
+  role: "Student • Developer",
+  interests: ["ML/AI", "Python", "Cooking", "Working Out"],
+  currently: "Studying CS @ Cornell University",
+
+};</pre>
+
+        <p class="about-text">
+          I’m a <strong>Freshman at Cornell University</strong> who loves building things and
+          breaking problems down. I’ve worked with <em>Python</em>, <em>JavaScript</em>,
+          and I’m diving deeper into <em>C/C++</em> and <em>systems</em>.
+          I’m especially excited about <em>ML/AI</em> and writing clean, performant code.
+        </p>
+
+        <div class="about-actions">
+          <a href="#projects" class="button nav-button">View Projects</a>
+          <a href="gabriel.b.meredith@gmail.com" class="button nav-button">Contact Me</a>
+          <a href="/Gabe M Resume 8_20_25 (1).pdf" class="button nav-button" target="_blank" rel="noopener">Resume</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!--
+
 <section id="about" class="about">
   
   <div class="about-container">
@@ -74,14 +120,53 @@
         <div class="skill-box">Tensorflow</div>
         <div class="skill-box">Machine Learning</div>
         <div class="skill-box">Java</div>
-        <div class="skill-box">Project Management</div> <!-- Add a little drop down hover menu that explains the skills and technologies-->
-        
+        <div class="skill-box">Project Management</div>  Add a little drop down hover menu that explains the skills and technologies
+     
       </div>
     </div>
   </div>
 </div>
+</section> 
+ -->
+ <section id="projects" class="projects-section">
+  <h2 class="section-title">~/projects</h2>
+  
+  <div class="project-card">
+    <!-- left: project screenshot -->
+    <div class="project-image">
+      <img src="/Images/Emoji.png" alt="Project Screenshot">
+    </div>
+
+    <!-- right: terminal-style block -->
+    <div class="project-info">
+      <div class="project-header">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <span class="title">emoji_predictor.js</span>
+      </div>
+      <div class="project-body">
+<pre>// Predicts emoji from text input
+const tech = ["Python", "TensorFlow", "GloVe"];
+const status = "Deployed on GitHub";
+</pre>
+        <p>
+          An ML model that suggests emojis for your messages.  
+          Trained on large text datasets using GloVe embeddings.
+        </p>
+        <div class="project-actions">
+          <a href="https://github.com/you/emoji-predictor" target="_blank" class="button nav-button">View Code</a>
+          <a href="https://your-live-demo.com" target="_blank" class="button nav-button">Live Demo</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
+    <!-- Add more project-cards here -->
+  </div>
+</section>
+<!-- 
 <section id="projects" class="projects">
   <h1 class="header">Some of My Machine Learning Projects</h1>
   <div class="projects-grid"> 
@@ -177,7 +262,7 @@
         </div>
         </div>     
   </div>
-</section>
+</section> -->
     <!-- repeat for other projects-->
     <!-- <div class="project-card"> 
       <div class="laptop-container">
