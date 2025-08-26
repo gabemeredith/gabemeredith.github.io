@@ -315,7 +315,7 @@ canvas {
 .project-card {
   display: grid;
   grid-template-columns: 60% 40%;
-  gap: 5rem; /* Space between the laptop and text */
+  gap: 5rem; /* Space between the laptop and text */ /*
   align-items: center; /* Vertically centers content */ /*
   justify-content: flex-start;
   width: 100%;
@@ -553,6 +553,7 @@ canvas {
 .project-body {
   padding: 18px;
   flex: 1;
+  font-family: Georgia, 'Times New Roman', Times, serif;
 }
 
 .project-body pre {
@@ -819,6 +820,7 @@ li a:hover {
   margin: 10px 0 16px;
   line-height: 1.6;
   color: #d2ffe0;
+
 }
 
 /* reuse your button style; included here in case you need it */
