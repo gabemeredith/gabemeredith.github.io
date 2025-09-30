@@ -1,14 +1,8 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
-}
-
-export default nextConfig
+module.exports = {
+  output: "export",                 // emit static site to ./out
+  images: { unoptimized: true },    // needed for GitHub Pages
+  eslint: { ignoreDuringBuilds: true },
+  typescript: { ignoreBuildErrors: true },
+  // No basePath/assetPrefix for username.github.io root
+};
