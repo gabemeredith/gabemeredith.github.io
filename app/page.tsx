@@ -4,6 +4,8 @@ import type React from "react"
 
 import { useEffect, useState } from "react"
 import {
+  ChevronLeft,  // ADD THIS
+  ChevronRight, // ADD THIS
   Github,
   Linkedin,
   Mail,
@@ -32,6 +34,7 @@ import { Card } from "@/components/ui/card"
 export default function Portfolio() {
   const [activeSection, setActiveSection] = useState("home")
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [currentProjectIndex, setCurrentProjectIndex] = useState(0)
 
   const words = ["coding", "problem-solving", "building", "creating", "innovating"]
   const [currentWordIndex, setCurrentWordIndex] = useState(0)
@@ -411,56 +414,92 @@ export default function Portfolio() {
         </div>
       </section>
 
-      <section id="projects" className="min-h-screen flex items-center justify-center px-6 py-12 relative z-10">
-        <div className="max-w-7xl w-full">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-12 bg-gradient-to-r from-white to-cyan-400 bg-clip-text text-transparent">
-            Featured Projects
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {projects.map((project, index) => (
-              <Card
-                key={project.title}
-                className="group relative overflow-hidden border-blue-500/20 bg-slate-900/50 backdrop-blur-lg hover:border-blue-500/50 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20"
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                }}
+<section id="projects" className="min-h-screen flex items-center justify-center px-6 py-12 relative z-10">
+  <div className="max-w-6xl w-full">
+    <h2 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-12 text-center bg-gradient-to-r from-white to-cyan-400 bg-clip-text text-transparent">
+      Featured Projects
+    </h2>
+    
+    {/* Carousel Container */}
+    <div className="relative">
+      {/* Main Project Card */}
+      <Card className="group relative overflow-hidden border-blue-500/30 bg-slate-900/60 backdrop-blur-lg hover:border-blue-500/50 transition-all duration-500 shadow-2xl shadow-blue-500/10">
+        <div className={`absolute inset-0 bg-gradient-to-br ${projects[currentProjectIndex].gradient} opacity-50 group-hover:opacity-70 transition-opacity duration-300`} />
+        
+        <div className="relative p-8 lg:p-12 space-y-6">
+          <div className="flex justify-between items-start">
+            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white group-hover:text-blue-300 transition-colors">
+              {projects[currentProjectIndex].title}
+            </h3>
+            <a
+              href={projects[currentProjectIndex].link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-400 hover:text-blue-400 transition-all hover:scale-110"
+            >
+              <ExternalLink className="h-7 w-7 lg:h-8 lg:w-8" />
+            </a>
+          </div>
+          
+          <p className="text-slate-200 text-lg md:text-xl lg:text-2xl leading-relaxed min-h-[120px]">
+            {projects[currentProjectIndex].description}
+          </p>
+          
+          <div className="flex flex-wrap gap-3 pt-4">
+            {projects[currentProjectIndex].tech.map((tech) => (
+              <span
+                key={tech}
+                className="px-4 py-2 lg:px-5 lg:py-2.5 bg-slate-800/70 text-slate-200 rounded-lg text-base md:text-lg lg:text-xl border border-slate-700/50 hover:border-blue-500/50 hover:text-blue-300 transition-all cursor-default font-medium"
               >
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${project.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-                />
-                <div className="relative p-6 lg:p-8 space-y-4">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-lg md:text-xl lg:text-2xl font-semibold text-white group-hover:text-blue-300 transition-colors">
-                      {project.title}
-                    </h3>
-                    <a
-                      href={project.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-slate-400 hover:text-blue-400 transition-all"
-                    >
-                      <ExternalLink className="h-5 w-5 lg:h-6 lg:w-6" />
-                    </a>
-                  </div>
-                  <p className="text-slate-300 text-sm md:text-base lg:text-lg leading-relaxed">
-                    {project.description}
-                  </p>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {project.tech.map((tech) => (
-                      <span
-                        key={tech}
-                        className="px-2 py-1 lg:px-3 lg:py-1.5 bg-slate-800/50 text-slate-300 rounded text-xs md:text-sm lg:text-base border border-slate-700/50 hover:border-blue-500/50 hover:text-blue-300 transition-all cursor-default"
-                      >
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </Card>
+                {tech}
+              </span>
             ))}
           </div>
         </div>
-      </section>
+      </Card>
+
+      {/* Navigation Buttons */}
+      <button
+        onClick={() => setCurrentProjectIndex((prev) => (prev - 1 + projects.length) % projects.length)}
+        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 lg:-translate-x-20 bg-slate-800/90 hover:bg-slate-700 text-white p-4 rounded-full shadow-2xl transition-all hover:scale-110 border border-blue-500/30 hover:border-blue-500/60 backdrop-blur-sm"
+        aria-label="Previous project"
+      >
+        <ChevronLeft className="w-6 h-6 lg:w-7 lg:h-7" />
+      </button>
+
+      <button
+        onClick={() => setCurrentProjectIndex((prev) => (prev + 1) % projects.length)}
+        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 lg:translate-x-20 bg-slate-800/90 hover:bg-slate-700 text-white p-4 rounded-full shadow-2xl transition-all hover:scale-110 border border-blue-500/30 hover:border-blue-500/60 backdrop-blur-sm"
+        aria-label="Next project"
+      >
+        <ChevronRight className="w-6 h-6 lg:w-7 lg:h-7" />
+      </button>
+    </div>
+
+    {/* Project Counter & Indicators */}
+    <div className="mt-8 lg:mt-12 flex flex-col items-center gap-6">
+      <div className="text-slate-400 text-base lg:text-lg font-medium">
+        Project {currentProjectIndex + 1} of {projects.length}
+      </div>
+      
+      {/* Dot Indicators */}
+      <div className="flex gap-3">
+        {projects.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentProjectIndex(index)}
+            className={`h-2.5 rounded-full transition-all duration-300 ${
+              index === currentProjectIndex
+                ? 'bg-blue-400 w-12 shadow-lg shadow-blue-400/50'
+                : 'bg-slate-600 w-2.5 hover:bg-slate-500'
+            }`}
+            aria-label={`Go to project ${index + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
 
       <section id="skills" className="min-h-screen flex items-center justify-center px-6 py-12 relative z-10">
         <div className="max-w-7xl w-full">
