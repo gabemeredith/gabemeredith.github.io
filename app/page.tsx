@@ -254,7 +254,7 @@ export default function Portfolio() {
                 <div className="h-full flex items-center justify-center p-6">
                   <div className="text-center">
                     <h2 className="text-4xl font-black uppercase mb-4">CHAPTER ONE</h2>
-                    <p className="font-comic text-lg font-bold">The Early Days</p>
+                    <p className="font-comic text-lg font-bold">The Backstory</p>
                   </div>
                 </div>
               </div>
@@ -498,7 +498,7 @@ export default function Portfolio() {
                 <div className="border-4 border-black bg-white p-6 space-y-4 relative">
                   <div className="bg-yellow-100 border-3 border-black p-4 italic">
                     <p className="font-comic text-sm leading-relaxed">
-                      <strong className="block text-xs uppercase mb-1">Somewhere in Warrensburg, NY...</strong>
+                      <strong className="block text-xs uppercase mb-1">Somewhere in New York...</strong>
                       Growing up, I was always fascinated by how things worked. Not just physically, but logically. 
                       How do computers think? How do algorithms solve problems? How can we teach machines to learn?
                     </p>
@@ -507,7 +507,7 @@ export default function Portfolio() {
                   <div className="relative mt-6">
                     <div className="bg-white border-3 border-black rounded-2xl px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                       <p className="font-comic font-bold">
-                        "I'm going to study Computer Science at Cornell and build things that matter!"
+                        "I’m a Computer Science student at Cornell University and a data engineer with the Cornell Algorithmic Trading Club, focused on software engineering at the intersection of systems, data, and applied AI. I build scalable, performance-driven tools for real-world decision-making and research."
                       </p>
                     </div>
                   </div>
@@ -550,7 +550,7 @@ export default function Portfolio() {
             <div className="bg-white border-8 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-2">
               <div className="bg-blue-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4">
                 <h2 className="text-white text-3xl font-black uppercase tracking-wider text-center">
-                  Chapter Two: The Adventures
+                  Chapter Two: The Projects
                 </h2>
               </div>
 
@@ -613,7 +613,7 @@ export default function Portfolio() {
             <div className="bg-white border-8 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-2">
               <div className="bg-emerald-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4">
                 <h2 className="text-white text-3xl font-black uppercase tracking-wider text-center">
-                  Chapter Three: The Arsenal
+                  Chapter Three: The Skills
                 </h2>
               </div>
 
@@ -621,7 +621,7 @@ export default function Portfolio() {
                 <div className="relative max-w-2xl mx-auto mb-8">
                   <div className="bg-white border-4 border-black rounded-full px-8 py-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                     <p className="font-comic font-bold text-center italic">
-                      "Every hero needs their tools and powers..."
+                      "Every developer needs skills..."
                     </p>
                   </div>
                   <div className="absolute -bottom-6 left-1/4">
