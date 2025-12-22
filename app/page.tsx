@@ -24,7 +24,7 @@ export default function Portfolio() {
     setAnimating(true)
     setTimeout(() => {
       setBookOpened(true)
-    }, 3500)
+    }, 2600)
   }
 
   useEffect(() => {
@@ -154,23 +154,12 @@ export default function Portfolio() {
           }
         }
 
-        @keyframes interior-reveal {
+        @keyframes zoom-in-hero {
           0% {
-            opacity: 0;
-            transform: scale(0.8);
+            transform: scale(0.4);
           }
           100% {
-            opacity: 1;
             transform: scale(1);
-          }
-        }
-
-        @keyframes zoom-to-panel {
-          0% {
-            transform: scale(1) translate(0, 0);
-          }
-          100% {
-            transform: scale(2.5) translate(20%, 25%);
           }
         }
 
@@ -192,16 +181,12 @@ export default function Portfolio() {
           transform-origin: left center;
         }
 
-        .interior-reveal-animate {
-          animation: interior-reveal 0.8s ease-out 1s forwards;
-        }
-
-        .zoom-to-panel-animate {
-          animation: zoom-to-panel 1.2s ease-in-out 2s forwards;
+        .zoom-in-hero-animate {
+          animation: zoom-in-hero 1s ease-out 1.5s forwards;
         }
 
         .fade-out-animate {
-          animation: fade-out 0.5s ease-out 3s forwards;
+          animation: fade-out 0.3s ease-out 2.3s forwards;
         }
       `}</style>
 
@@ -236,43 +221,48 @@ export default function Portfolio() {
             {/* Comic-style shadow */}
             <div className="absolute inset-0 bg-black transform translate-x-4 translate-y-4 -z-10" />
             
-            {/* Interior Page (revealed when cover opens) */}
-            <div className={`absolute inset-0 bg-amber-50 border-8 border-black ${animating ? 'interior-reveal-animate zoom-to-panel-animate' : 'opacity-0'}`}>
-              {/* Paper texture */}
-              <div 
-                className="absolute inset-0 opacity-30"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.3'/%3E%3C/svg%3E")`
-                }}
-              />
-              
-              {/* First Panel - Top Left (this will zoom in to fill screen) */}
-              <div className="absolute top-4 left-4 right-1/2 h-[45%] border-4 border-black bg-gradient-to-br from-yellow-100 to-orange-100 overflow-hidden">
-                <div className="absolute top-2 left-2 bg-yellow-300 border-2 border-black px-2 py-1 transform -rotate-3 text-xs font-black">
-                  PANEL 1
+            {/* Interior Page (right page showing hero section) */}
+            <div className="absolute inset-0 bg-amber-50 border-8 border-black overflow-hidden">
+              {/* Mini hero section preview */}
+              <div className={`w-full h-full relative ${animating ? 'zoom-in-hero-animate' : ''}`} style={{ transformOrigin: 'center center', transform: 'scale(0.4)' }}>
+                {/* Background gradient matching hero */}
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-200 via-red-200 to-blue-200" />
+                
+                {/* Comic burst lines */}
+                <div className="absolute inset-0 overflow-hidden">
+                  {[...Array(16)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute top-1/2 left-1/2 w-1 h-full bg-black opacity-5"
+                      style={{
+                        transform: `rotate(${i * 22.5}deg)`,
+                        transformOrigin: 'top center'
+                      }}
+                    />
+                  ))}
                 </div>
-                <div className="h-full flex items-center justify-center p-6">
-                  <div className="text-center">
-                    <h2 className="text-4xl font-black uppercase mb-4">CHAPTER ONE</h2>
-                    <p className="font-comic text-lg font-bold">The Backstory</p>
-                  </div>
-                </div>
-              </div>
 
-              {/* Other panels for completeness */}
-              <div className="absolute top-4 right-4 left-1/2 h-[45%] border-4 border-black bg-white">
-                <div className="h-full flex items-center justify-center p-4">
-                  <p className="font-comic text-sm">Panel 2</p>
-                </div>
-              </div>
-              <div className="absolute bottom-4 left-4 right-1/2 h-[45%] border-4 border-black bg-white">
-                <div className="h-full flex items-center justify-center p-4">
-                  <p className="font-comic text-sm">Panel 3</p>
-                </div>
-              </div>
-              <div className="absolute bottom-4 right-4 left-1/2 h-[45%] border-4 border-black bg-white">
-                <div className="h-full flex items-center justify-center p-4">
-                  <p className="font-comic text-sm">Panel 4</p>
+                {/* Simplified hero content */}
+                <div className="relative h-full flex flex-col items-center justify-center p-4">
+                  <div className="inline-block bg-yellow-300 border-4 border-black px-4 py-1 transform -rotate-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-3">
+                    <p className="text-xs font-black uppercase tracking-widest">Issue #1</p>
+                  </div>
+
+                  <h1 className="text-4xl md:text-5xl font-black mb-2 italic transform -skew-y-2">
+                    <span className="inline-block text-stroke-3 text-white drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                      GABE
+                    </span>
+                    <br />
+                    <span className="inline-block text-stroke-3 text-red-600 drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+                      MEREDITH
+                    </span>
+                  </h1>
+
+                  <div className="inline-block bg-white border-4 border-black px-4 py-2 transform rotate-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <p className="text-xs font-bold uppercase tracking-wide">
+                      Origin Story: CS @ Cornell
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -507,7 +497,7 @@ export default function Portfolio() {
                   <div className="relative mt-6">
                     <div className="bg-white border-3 border-black rounded-2xl px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                       <p className="font-comic font-bold">
-                        "I’m a Computer Science student at Cornell University and a data engineer with the Cornell Algorithmic Trading Club, focused on software engineering at the intersection of systems, data, and applied AI. I build scalable, performance-driven tools for real-world decision-making and research."
+                        "I'm a Computer Science student at Cornell University and a data engineer with the Cornell Algorithmic Trading Club, focused on software engineering at the intersection of systems, data, and applied AI. I build scalable, performance-driven tools for real-world decision-making and research."
                       </p>
                     </div>
                   </div>
@@ -550,7 +540,7 @@ export default function Portfolio() {
             <div className="bg-white border-8 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-2">
               <div className="bg-blue-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4">
                 <h2 className="text-white text-3xl font-black uppercase tracking-wider text-center">
-                  Chapter Two: The Projects
+                  Chapter Two: The Adventures
                 </h2>
               </div>
 
@@ -613,7 +603,7 @@ export default function Portfolio() {
             <div className="bg-white border-8 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-2">
               <div className="bg-emerald-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4">
                 <h2 className="text-white text-3xl font-black uppercase tracking-wider text-center">
-                  Chapter Three: The Skills
+                  Chapter Three: The Arsenal
                 </h2>
               </div>
 
@@ -621,7 +611,7 @@ export default function Portfolio() {
                 <div className="relative max-w-2xl mx-auto mb-8">
                   <div className="bg-white border-4 border-black rounded-full px-8 py-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                     <p className="font-comic font-bold text-center italic">
-                      "Every developer needs skills..."
+                      "Every hero needs their tools and powers..."
                     </p>
                   </div>
                   <div className="absolute -bottom-6 left-1/4">
