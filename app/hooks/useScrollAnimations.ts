@@ -15,56 +15,15 @@ export function useScrollAnimations(ready: boolean) {
     // Small delay to ensure DOM is painted
     const timeout = setTimeout(() => {
       ctxRef.current = gsap.context(() => {
-        // --- Hero Entrance (not scroll-triggered, fires immediately) ---
-        const heroTl = gsap.timeline({ delay: 0.1 })
-
-        heroTl
-          .from(".hero-badge", {
-            y: 30,
-            opacity: 0,
-            duration: 0.6,
-            ease: "power2.out",
-          })
-          .from(
-            ".hero-name",
-            {
-              y: 80,
-              opacity: 0,
-              duration: 0.8,
-              stagger: 0.15,
-              ease: "power3.out",
-            },
-            "-=0.2"
-          )
-          .from(
-            ".hero-subtitle",
-            {
-              scaleX: 0,
-              duration: 0.5,
-              ease: "power2.out",
-              transformOrigin: "left center",
-            },
-            "-=0.3"
-          )
-          .from(
-            ".hero-bubble",
-            {
-              scale: 0,
-              duration: 0.4,
-              ease: "back.out(1.7)",
-              transformOrigin: "bottom center",
-            },
-            "-=0.1"
-          )
-          .from(
-            ".hero-chevron",
-            {
-              opacity: 0,
-              duration: 0.3,
-              ease: "power2.out",
-            },
-            "-=0.1"
-          )
+        // All hero elements now match the interior page — they appear instantly.
+        // Only the bouncing chevron fades in since it's not on the interior.
+        gsap.from(".hero-chevron", {
+          opacity: 0,
+          y: 20,
+          duration: 0.4,
+          delay: 0.2,
+          ease: "power2.out",
+        })
 
         // --- Chapter Headers ---
         gsap.utils.toArray<HTMLElement>(".chapter-header").forEach((header) => {

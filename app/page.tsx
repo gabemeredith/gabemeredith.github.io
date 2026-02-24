@@ -32,9 +32,11 @@ export default function Portfolio() {
   const handleBookClick = () => {
     if (animating) return
     setAnimating(true)
+    // At the end of the camera dive, instantly swap: remove overlay, show hero.
+    // No fade on the overlay — the interior text IS the hero text at 4x, so instant swap = seamless.
     setTimeout(() => {
       setBookOpened(true)
-    }, 2800)
+    }, 2400)
   }
 
   const handleCoverMouseMove = useCallback((e: React.MouseEvent) => {
@@ -150,15 +152,10 @@ export default function Portfolio() {
           100% { transform: rotateY(-160deg); }
         }
 
-        /* The entire overlay zooms forward — book edges rush past camera */
+        /* 4x zoom: interior text × 4 = hero text size */
         @keyframes camera-dive {
           0% { transform: scale(1); }
-          100% { transform: scale(5); }
-        }
-
-        @keyframes fade-out-overlay {
-          0% { opacity: 1; }
-          100% { opacity: 0; }
+          100% { transform: scale(4); }
         }
 
         .cover-pulse-animate {
@@ -172,11 +169,6 @@ export default function Portfolio() {
 
         .camera-dive-animate {
           animation: camera-dive 1.0s cubic-bezier(0.32, 0, 0.67, 0) 1.4s forwards;
-        }
-
-        .fade-out-overlay-animate {
-          animation: fade-out-overlay 0.4s ease-out 2.4s forwards;
-          pointer-events: none;
         }
 
         /* === COVER DECORATIVE ANIMATIONS === */
@@ -235,6 +227,18 @@ export default function Portfolio() {
         }
 
         /* === NAV === */
+        @keyframes nav-drop {
+          0% { transform: translateY(-120%); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        .nav-drop-in {
+          animation: nav-drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .nav-hidden {
+          transform: translateY(-120%);
+          opacity: 0;
+        }
+
         .nav-link::after {
           content: '';
           position: absolute;
@@ -261,10 +265,10 @@ export default function Portfolio() {
         }
       `}</style>
 
-      {/* Book Cover Overlay */}
+      {/* Book Cover Overlay — removed instantly (no fade) when bookOpened flips */}
       {!bookOpened && (
         <div
-          className={`fixed inset-0 z-[100] flex items-center justify-center bg-yellow-200 overflow-hidden ${animating ? "fade-out-overlay-animate" : ""}`}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-yellow-200 overflow-hidden"
         >
           {/* Halftone dot pattern background */}
           <div
@@ -349,7 +353,7 @@ export default function Portfolio() {
             </div>
           )}
 
-          {/* Camera dive wrapper — scales the entire book scene */}
+          {/* Camera dive wrapper — scales the entire book scene 4x */}
           <div
             className={animating ? "camera-dive-animate" : ""}
             style={{ transformOrigin: "center center" }}
@@ -373,12 +377,9 @@ export default function Portfolio() {
               {/* Comic-style shadow */}
               <div className="absolute inset-0 bg-black transform translate-x-4 translate-y-4 -z-10" />
 
-              {/* Interior Page (visible after cover flips) — full-size, matches cover */}
+              {/* Interior Page — all elements at 1/4 hero size, 4x zoom = exact match */}
               <div className="absolute inset-0 border-8 border-black overflow-hidden">
-                {/* Background gradient */}
                 <div className="absolute inset-0 bg-gradient-to-br from-yellow-200 via-red-200 to-blue-200" />
-
-                {/* Speed lines */}
                 <div className="absolute inset-0 overflow-hidden">
                   {[...Array(16)].map((_, i) => (
                     <div
@@ -392,31 +393,54 @@ export default function Portfolio() {
                   ))}
                 </div>
 
-                {/* Full-size interior content */}
-                <div className="relative h-full flex flex-col items-center justify-center p-4 md:p-6">
-                  <div className="inline-block bg-yellow-300 border-3 border-black px-4 py-1 transform -rotate-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mb-3">
-                    <p className="text-[10px] md:text-xs font-black uppercase tracking-widest">Issue #1</p>
+                {/* Floating action words at 1/4 scale */}
+                <div className="absolute top-[10%] left-[3%] hidden md:block">
+                  <div className="bg-yellow-300 border border-black px-1 py-0.5 font-bangers text-[0.3rem] tracking-wide shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transform -rotate-12">
+                    WOW!
+                  </div>
+                </div>
+                <div className="absolute top-[14%] right-[3%] hidden md:block">
+                  <div className="bg-red-500 text-white border border-black px-1 py-0.5 font-bangers text-[0.3rem] tracking-wide shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transform rotate-6">
+                    AMAZING!
+                  </div>
+                </div>
+
+                <div className="relative h-full flex flex-col items-center justify-center">
+                  {/* Issue #1 badge: hero is text-sm/text-base → 1/4 ≈ text-[0.22rem]/text-[0.25rem] */}
+                  <div className="mb-1 md:mb-1.5">
+                    <div className="inline-block bg-yellow-300 border border-black px-2 py-0.5 transform -rotate-2 shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]">
+                      <p className="text-[0.22rem] md:text-[0.25rem] font-black uppercase tracking-widest flex items-center gap-0.5">
+                        <Zap className="w-1 h-1" />
+                        Issue #1
+                        <Zap className="w-1 h-1" />
+                      </p>
+                    </div>
                   </div>
 
-                  <h1 className="text-3xl md:text-5xl font-black mb-2 italic transform -skew-y-2 text-center leading-tight">
-                    <span className="inline-block text-stroke-2 text-white drop-shadow-[3px_3px_0px_rgba(0,0,0,1)]">
+                  {/* Name: hero is 6rem/10rem/12rem → 1/4 = 1.5rem/2.5rem/3rem */}
+                  <h1 className="text-[1.5rem] md:text-[2.5rem] lg:text-[3rem] font-black mb-1 md:mb-1.5 italic transform -skew-y-2 text-center leading-[0.85]">
+                    <span className="inline-block text-stroke-2 text-white drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]">
                       GABE
                     </span>
                     <br />
-                    <span className="inline-block text-stroke-2 text-red-600 drop-shadow-[3px_3px_0px_rgba(0,0,0,1)]">
+                    <span className="inline-block text-stroke-2 text-red-600 drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]">
                       MEREDITH
                     </span>
                   </h1>
 
-                  <div className="inline-block bg-white border-3 border-black px-3 py-1.5 transform rotate-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mb-2">
-                    <p className="text-[10px] md:text-sm font-bold uppercase tracking-wide">
+                  {/* Subtitle: hero is text-xl/2xl/3xl → 1/4 ≈ text-[0.31rem]/text-[0.375rem]/text-[0.47rem] */}
+                  <div className="inline-block bg-white border border-black px-2 py-0.5 transform rotate-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mb-1 md:mb-2">
+                    <p className="text-[0.31rem] md:text-[0.375rem] lg:text-[0.47rem] font-bold uppercase tracking-wide flex items-center gap-0.5">
+                      <Star className="w-1 h-1 md:w-1.5 md:h-1.5 text-yellow-500" />
                       Origin Story: CS @ Cornell
+                      <Star className="w-1 h-1 md:w-1.5 md:h-1.5 text-yellow-500" />
                     </p>
                   </div>
 
-                  <div className="max-w-[80%]">
-                    <div className="bg-white border-3 border-black rounded-2xl px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                      <p className="font-comic text-[10px] md:text-sm font-bold text-center">
+                  {/* Speech bubble: hero is text-xl/2xl → 1/4 ≈ text-[0.31rem]/text-[0.375rem] */}
+                  <div className="max-w-[60%] mt-1">
+                    <div className="bg-white border border-black rounded-lg px-1.5 py-1 shadow-[1.5px_1.5px_0px_0px_rgba(0,0,0,1)]">
+                      <p className="font-comic text-[0.31rem] md:text-[0.375rem] font-bold text-center">
                         &ldquo;Every great developer has an origin story...&rdquo;
                       </p>
                     </div>
@@ -578,7 +602,7 @@ export default function Portfolio() {
 
         {/* Navigation */}
         <nav className="fixed top-2 left-0 right-0 z-40 px-4">
-          <div className="max-w-7xl mx-auto bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className={`max-w-7xl mx-auto bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${bookOpened ? "nav-drop-in" : "nav-hidden"}`}>
             <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0">
               <div className="text-3xl font-black italic transform -skew-x-6">
                 <span className="text-red-600">GM</span>
@@ -633,18 +657,22 @@ export default function Portfolio() {
           </div>
 
           {/* Comic-style decorative corners */}
-          <div className="absolute top-24 left-4 md:left-8 hidden md:block">
-            <div className="float-animated bg-yellow-300 border-3 border-black px-3 py-1 font-bangers text-base tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform -rotate-12" style={{ "--float-rot": "-12deg" } as React.CSSProperties}>
-              WOW!
-            </div>
-          </div>
-          <div className="absolute top-32 right-4 md:right-8 hidden md:block">
-            <div className="float-animated bg-red-500 text-white border-3 border-black px-3 py-1 font-bangers text-base tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform rotate-6" style={{ "--float-rot": "6deg", animationDelay: "1s" } as React.CSSProperties}>
-              AMAZING!
-            </div>
-          </div>
+          {bookOpened && (
+            <>
+              <div className="absolute top-24 left-4 md:left-8 hidden md:block">
+                <div className="float-animated bg-yellow-300 border-3 border-black px-3 py-1 font-bangers text-base tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform -rotate-12" style={{ "--float-rot": "-12deg" } as React.CSSProperties}>
+                  WOW!
+                </div>
+              </div>
+              <div className="absolute top-32 right-4 md:right-8 hidden md:block">
+                <div className="float-animated bg-red-500 text-white border-3 border-black px-3 py-1 font-bangers text-base tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform rotate-6" style={{ "--float-rot": "6deg", animationDelay: "1s" } as React.CSSProperties}>
+                  AMAZING!
+                </div>
+              </div>
+            </>
+          )}
 
-          <div className="relative z-10 text-center max-w-5xl w-full px-6">
+          <div className={`relative z-10 text-center max-w-5xl w-full px-6 ${!bookOpened ? "invisible" : ""}`}>
             <div className="hero-badge mb-6 md:mb-8">
               <div className="inline-block bg-yellow-300 border-4 border-black px-8 md:px-10 py-2 md:py-3 transform -rotate-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                 <p className="text-sm md:text-base font-black uppercase tracking-widest flex items-center gap-2">
