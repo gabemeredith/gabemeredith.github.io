@@ -156,12 +156,6 @@ export default function Portfolio() {
           100% { transform: scale(5); }
         }
 
-        /* Interior content scales up to fill the expanded view */
-        @keyframes interior-expand {
-          0% { transform: scale(0.45); opacity: 1; }
-          100% { transform: scale(1.1); opacity: 1; }
-        }
-
         @keyframes fade-out-overlay {
           0% { opacity: 1; }
           100% { opacity: 0; }
@@ -178,11 +172,6 @@ export default function Portfolio() {
 
         .camera-dive-animate {
           animation: camera-dive 1.0s cubic-bezier(0.32, 0, 0.67, 0) 1.4s forwards;
-        }
-
-        .interior-expand-animate {
-          animation: interior-expand 1.0s cubic-bezier(0.33, 1, 0.68, 1) 1.4s forwards;
-          transform: scale(0.45);
         }
 
         .fade-out-overlay-animate {
@@ -384,58 +373,52 @@ export default function Portfolio() {
               {/* Comic-style shadow */}
               <div className="absolute inset-0 bg-black transform translate-x-4 translate-y-4 -z-10" />
 
-              {/* Interior Page (visible after cover flips) */}
-              <div className="absolute inset-0 bg-amber-50 border-8 border-black overflow-hidden">
-                <div
-                  className={`w-full h-full relative ${animating ? "interior-expand-animate" : ""}`}
-                  style={{
-                    transformOrigin: "center center",
-                    transform: "scale(0.45)",
-                  }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-200 via-red-200 to-blue-200" />
+              {/* Interior Page (visible after cover flips) — full-size, matches cover */}
+              <div className="absolute inset-0 border-8 border-black overflow-hidden">
+                {/* Background gradient */}
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-200 via-red-200 to-blue-200" />
 
-                  <div className="absolute inset-0 overflow-hidden">
-                    {[...Array(16)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute top-1/2 left-1/2 w-1 h-full bg-black opacity-5"
-                        style={{
-                          transform: `rotate(${i * 22.5}deg)`,
-                          transformOrigin: "top center",
-                        }}
-                      />
-                    ))}
+                {/* Speed lines */}
+                <div className="absolute inset-0 overflow-hidden">
+                  {[...Array(16)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="absolute top-1/2 left-1/2 w-1 h-full bg-black opacity-5"
+                      style={{
+                        transform: `rotate(${i * 22.5}deg)`,
+                        transformOrigin: "top center",
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Full-size interior content */}
+                <div className="relative h-full flex flex-col items-center justify-center p-4 md:p-6">
+                  <div className="inline-block bg-yellow-300 border-3 border-black px-4 py-1 transform -rotate-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mb-3">
+                    <p className="text-[10px] md:text-xs font-black uppercase tracking-widest">Issue #1</p>
                   </div>
 
-                  {/* Interior hero preview — larger text so it reads well during dive */}
-                  <div className="relative h-full flex flex-col items-center justify-center p-8">
-                    <div className="inline-block bg-yellow-300 border-4 border-black px-6 py-2 transform -rotate-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-6">
-                      <p className="text-sm md:text-base font-black uppercase tracking-widest">Issue #1</p>
-                    </div>
+                  <h1 className="text-3xl md:text-5xl font-black mb-2 italic transform -skew-y-2 text-center leading-tight">
+                    <span className="inline-block text-stroke-2 text-white drop-shadow-[3px_3px_0px_rgba(0,0,0,1)]">
+                      GABE
+                    </span>
+                    <br />
+                    <span className="inline-block text-stroke-2 text-red-600 drop-shadow-[3px_3px_0px_rgba(0,0,0,1)]">
+                      MEREDITH
+                    </span>
+                  </h1>
 
-                    <h1 className="text-6xl md:text-8xl font-black mb-4 italic transform -skew-y-2">
-                      <span className="inline-block text-stroke-3 text-white drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
-                        GABE
-                      </span>
-                      <br />
-                      <span className="inline-block text-stroke-3 text-red-600 drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
-                        MEREDITH
-                      </span>
-                    </h1>
+                  <div className="inline-block bg-white border-3 border-black px-3 py-1.5 transform rotate-1 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] mb-2">
+                    <p className="text-[10px] md:text-sm font-bold uppercase tracking-wide">
+                      Origin Story: CS @ Cornell
+                    </p>
+                  </div>
 
-                    <div className="inline-block bg-white border-4 border-black px-6 py-3 transform rotate-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-4">
-                      <p className="text-base md:text-lg font-bold uppercase tracking-wide">
-                        Origin Story: CS @ Cornell
+                  <div className="max-w-[80%]">
+                    <div className="bg-white border-3 border-black rounded-2xl px-3 py-2 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                      <p className="font-comic text-[10px] md:text-sm font-bold text-center">
+                        &ldquo;Every great developer has an origin story...&rdquo;
                       </p>
-                    </div>
-
-                    <div className="max-w-md">
-                      <div className="bg-white border-4 border-black rounded-3xl px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                        <p className="font-comic text-base md:text-lg font-bold text-center">
-                          &ldquo;Every great developer has an origin story...&rdquo;
-                        </p>
-                      </div>
                     </div>
                   </div>
                 </div>
