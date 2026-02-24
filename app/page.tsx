@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import {
   Github,
   Linkedin,
@@ -12,20 +12,38 @@ import {
   Globe,
   Terminal,
   ChevronDown,
+  Zap,
+  Star,
+  Sparkles,
 } from "lucide-react"
+import { useScrollAnimations } from "./hooks/useScrollAnimations"
+import { useTiltEffect, useMagneticEffect } from "./hooks/useTiltEffect"
 
 export default function Portfolio() {
   const [bookOpened, setBookOpened] = useState(false)
   const [animating, setAnimating] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
-  const [visiblePanels, setVisiblePanels] = useState<number[]>([])
+  const [mouseOnCover, setMouseOnCover] = useState({ x: 0, y: 0 })
+
+  const tilt = useTiltEffect(8)
+  const magnetic = useMagneticEffect(0.15)
+  useScrollAnimations(bookOpened)
 
   const handleBookClick = () => {
+    if (animating) return
     setAnimating(true)
     setTimeout(() => {
       setBookOpened(true)
-    }, 2600)
+    }, 2800)
   }
+
+  const handleCoverMouseMove = useCallback((e: React.MouseEvent) => {
+    if (animating) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2
+    setMouseOnCover({ x, y })
+  }, [animating])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,28 +54,6 @@ export default function Portfolio() {
 
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  useEffect(() => {
-    const observerOptions = {
-      threshold: 0.3,
-      rootMargin: "0px",
-    }
-
-    const observerCallback = (entries: IntersectionObserverEntry[]) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const panelIndex = parseInt(entry.target.getAttribute("data-panel") || "0")
-          setVisiblePanels((prev) => [...new Set([...prev, panelIndex])])
-        }
-      })
-    }
-
-    const observer = new IntersectionObserver(observerCallback, observerOptions)
-    const panels = document.querySelectorAll("[data-panel]")
-    panels.forEach((panel) => observer.observe(panel))
-
-    return () => panels.forEach((panel) => observer.unobserve(panel))
   }, [])
 
   const projects = [
@@ -126,239 +122,453 @@ export default function Portfolio() {
     <>
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap');
-        
+
         .font-comic {
           font-family: 'Comic Neue', cursive;
         }
-        
+        .font-bangers {
+          font-family: 'Bangers', cursive;
+        }
+
         .text-stroke-3 {
           -webkit-text-stroke: 3px black;
           paint-order: stroke fill;
         }
+        .text-stroke-2 {
+          -webkit-text-stroke: 2px black;
+          paint-order: stroke fill;
+        }
 
-        @keyframes push-in {
-          0% {
-            transform: scale(1) translateZ(0);
-          }
-          100% {
-            transform: scale(1.05) translateZ(100px);
-          }
+        /* === COVER ANIMATIONS === */
+        @keyframes cover-pulse {
+          0% { transform: perspective(800px) rotateY(var(--ry, 0deg)) rotateX(var(--rx, 0deg)) scale(1); }
+          100% { transform: perspective(800px) rotateY(0deg) rotateX(0deg) scale(1.02); }
         }
 
         @keyframes cover-open {
-          0% {
-            transform: perspective(2000px) rotateY(0deg);
-          }
-          100% {
-            transform: perspective(2000px) rotateY(-160deg);
-          }
+          0% { transform: rotateY(0deg); }
+          100% { transform: rotateY(-160deg); }
         }
 
-        @keyframes zoom-in-hero {
-          0% {
-            transform: scale(0.4);
-          }
-          100% {
-            transform: scale(1);
-          }
+        /* The entire overlay zooms forward — book edges rush past camera */
+        @keyframes camera-dive {
+          0% { transform: scale(1); }
+          100% { transform: scale(5); }
         }
 
-        @keyframes fade-out {
-          0% {
-            opacity: 1;
-          }
-          100% {
-            opacity: 0;
-          }
+        /* Interior content scales up to fill the expanded view */
+        @keyframes interior-expand {
+          0% { transform: scale(0.45); opacity: 1; }
+          100% { transform: scale(1.1); opacity: 1; }
         }
 
-        .push-in-animate {
-          animation: push-in 1s ease-in forwards;
+        @keyframes fade-out-overlay {
+          0% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+
+        .cover-pulse-animate {
+          animation: cover-pulse 0.3s ease-out forwards;
         }
 
         .cover-open-animate {
-          animation: cover-open 1s ease-in-out 1s forwards;
+          animation: cover-open 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
           transform-origin: left center;
         }
 
-        .zoom-in-hero-animate {
-          animation: zoom-in-hero 1s ease-out 1.5s forwards;
+        .camera-dive-animate {
+          animation: camera-dive 1.0s cubic-bezier(0.32, 0, 0.67, 0) 1.4s forwards;
         }
 
-        .fade-out-animate {
-          animation: fade-out 0.3s ease-out 2.3s forwards;
+        .interior-expand-animate {
+          animation: interior-expand 1.0s cubic-bezier(0.33, 1, 0.68, 1) 1.4s forwards;
+          transform: scale(0.45);
+        }
+
+        .fade-out-overlay-animate {
+          animation: fade-out-overlay 0.4s ease-out 2.4s forwards;
+          pointer-events: none;
+        }
+
+        /* === COVER DECORATIVE ANIMATIONS === */
+        @keyframes speed-line-pulse {
+          0%, 100% { opacity: 0.06; }
+          50% { opacity: 0.15; }
+        }
+
+        @keyframes float-up {
+          0%, 100% { transform: translateY(0px) rotate(var(--float-rot, 0deg)); }
+          50% { transform: translateY(-12px) rotate(var(--float-rot, 0deg)); }
+        }
+
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+
+        @keyframes badge-bounce {
+          0%, 100% { transform: rotate(-6deg) scale(1); }
+          50% { transform: rotate(-6deg) scale(1.05); }
+        }
+
+        @keyframes sparkle {
+          0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+          50% { opacity: 1; transform: scale(1) rotate(180deg); }
+        }
+
+        @keyframes glow-pulse {
+          0%, 100% { box-shadow: 12px 12px 0px 0px rgba(0,0,0,1), 0 0 20px rgba(255,255,0,0); }
+          50% { box-shadow: 12px 12px 0px 0px rgba(0,0,0,1), 0 0 40px rgba(255,255,0,0.3); }
+        }
+
+        .speed-line-animated {
+          animation: speed-line-pulse 3s ease-in-out infinite;
+        }
+
+        .float-animated {
+          animation: float-up 3s ease-in-out infinite;
+        }
+
+        .shimmer-text {
+          background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+          background-size: 200% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          animation: shimmer 3s ease-in-out infinite;
+        }
+
+        .badge-animated {
+          animation: badge-bounce 2s ease-in-out infinite;
+        }
+
+        .glow-animated {
+          animation: glow-pulse 2s ease-in-out infinite;
+        }
+
+        /* === NAV === */
+        .nav-link::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          width: 100%;
+          height: 3px;
+          background: #dc2626;
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
+        }
+        .nav-link:hover::after {
+          transform: scaleX(1);
+        }
+
+        /* === ACTION WORDS === */
+        @keyframes action-pop {
+          0%, 100% { transform: scale(1) rotate(var(--action-rot, -12deg)); }
+          50% { transform: scale(1.1) rotate(var(--action-rot, -12deg)); }
+        }
+        .action-word {
+          animation: action-pop 2.5s ease-in-out infinite;
         }
       `}</style>
 
       {/* Book Cover Overlay */}
       {!bookOpened && (
-        <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-yellow-200 ${animating ? 'fade-out-animate' : ''}`} style={{ perspective: '2000px' }}>
+        <div
+          className={`fixed inset-0 z-[100] flex items-center justify-center bg-yellow-200 overflow-hidden ${animating ? "fade-out-overlay-animate" : ""}`}
+        >
           {/* Halftone dot pattern background */}
-          <div 
+          <div
             className="absolute inset-0 opacity-20"
             style={{
               backgroundImage: `radial-gradient(circle, black 1px, transparent 1px)`,
-              backgroundSize: '20px 20px'
+              backgroundSize: "20px 20px",
             }}
           />
 
-          {/* Comic burst lines radiating from center */}
+          {/* Animated speed lines radiating from center */}
           <div className="absolute inset-0 overflow-hidden">
-            {[...Array(16)].map((_, i) => (
+            {[...Array(24)].map((_, i) => (
               <div
                 key={i}
-                className="absolute top-1/2 left-1/2 w-1 h-full bg-black opacity-10"
+                className="speed-line-animated absolute top-1/2 left-1/2 bg-black"
                 style={{
-                  transform: `rotate(${i * 22.5}deg)`,
-                  transformOrigin: 'top center'
+                  width: i % 3 === 0 ? "3px" : "1.5px",
+                  height: "150%",
+                  transform: `rotate(${i * 15}deg)`,
+                  transformOrigin: "top center",
+                  animationDelay: `${i * 0.12}s`,
                 }}
               />
             ))}
           </div>
 
-          {/* Book Container with push-in animation */}
-          <div className={`relative w-[80vw] max-w-xl aspect-[3/4] cursor-pointer ${animating ? 'push-in-animate' : ''}`} onClick={handleBookClick} style={{ transformStyle: 'preserve-3d' }}>
-            {/* Comic-style shadow */}
-            <div className="absolute inset-0 bg-black transform translate-x-4 translate-y-4 -z-10" />
-            
-            {/* Interior Page (right page showing hero section) */}
-            <div className="absolute inset-0 bg-amber-50 border-8 border-black overflow-hidden">
-              {/* Mini hero section preview */}
-              <div className={`w-full h-full relative ${animating ? 'zoom-in-hero-animate' : ''}`} style={{ transformOrigin: 'center center', transform: 'scale(0.4)' }}>
-                {/* Background gradient matching hero */}
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-200 via-red-200 to-blue-200" />
-                
-                {/* Comic burst lines */}
-                <div className="absolute inset-0 overflow-hidden">
-                  {[...Array(16)].map((_, i) => (
+          {/* Floating comic sparkles around the book */}
+          {!animating && (
+            <div className="absolute inset-0 pointer-events-none">
+              {[
+                { top: "12%", left: "15%", delay: "0s", size: "w-5 h-5" },
+                { top: "20%", right: "18%", delay: "0.8s", size: "w-4 h-4" },
+                { top: "75%", left: "20%", delay: "1.6s", size: "w-3 h-3" },
+                { top: "70%", right: "15%", delay: "0.4s", size: "w-5 h-5" },
+                { top: "30%", left: "8%", delay: "1.2s", size: "w-4 h-4" },
+                { top: "60%", right: "8%", delay: "2.0s", size: "w-3 h-3" },
+              ].map((spark, i) => (
+                <div
+                  key={i}
+                  className={`absolute ${spark.size} text-yellow-500`}
+                  style={{
+                    top: spark.top,
+                    left: spark.left,
+                    right: spark.right,
+                    animation: `sparkle 2.5s ease-in-out ${spark.delay} infinite`,
+                  }}
+                >
+                  <Sparkles className="w-full h-full" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Floating action words */}
+          {!animating && (
+            <div className="absolute inset-0 pointer-events-none hidden md:block">
+              <div
+                className="action-word absolute top-[15%] left-[6%] bg-yellow-300 border-3 border-black px-3 py-1 font-bangers text-lg tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                style={{ "--action-rot": "-12deg", animationDelay: "0s" } as React.CSSProperties}
+              >
+                POW!
+              </div>
+              <div
+                className="action-word absolute top-[18%] right-[7%] bg-red-500 text-white border-3 border-black px-3 py-1 font-bangers text-lg tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                style={{ "--action-rot": "8deg", animationDelay: "0.8s" } as React.CSSProperties}
+              >
+                ZAP!
+              </div>
+              <div
+                className="action-word absolute bottom-[18%] left-[8%] bg-blue-500 text-white border-3 border-black px-3 py-1 font-bangers text-lg tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                style={{ "--action-rot": "15deg", animationDelay: "1.5s" } as React.CSSProperties}
+              >
+                WHAM!
+              </div>
+              <div
+                className="action-word absolute bottom-[22%] right-[6%] bg-emerald-500 text-white border-3 border-black px-3 py-1 font-bangers text-lg tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                style={{ "--action-rot": "-8deg", animationDelay: "0.4s" } as React.CSSProperties}
+              >
+                BAM!
+              </div>
+            </div>
+          )}
+
+          {/* Camera dive wrapper — scales the entire book scene */}
+          <div
+            className={animating ? "camera-dive-animate" : ""}
+            style={{ transformOrigin: "center center" }}
+          >
+            {/* Book Container with 3D tilt on hover */}
+            <div
+              className={`relative w-[85vw] max-w-xl aspect-[3/4] cursor-pointer ${animating ? "cover-pulse-animate" : ""}`}
+              onClick={handleBookClick}
+              onMouseMove={handleCoverMouseMove}
+              onMouseLeave={() => !animating && setMouseOnCover({ x: 0, y: 0 })}
+              style={{
+                transformStyle: "preserve-3d",
+                transform: animating
+                  ? undefined
+                  : `perspective(800px) rotateY(${mouseOnCover.x * 5}deg) rotateX(${-mouseOnCover.y * 5}deg)`,
+                transition: animating ? undefined : "transform 0.15s ease-out",
+                ["--ry" as string]: `${mouseOnCover.x * 5}deg`,
+                ["--rx" as string]: `${-mouseOnCover.y * 5}deg`,
+              }}
+            >
+              {/* Comic-style shadow */}
+              <div className="absolute inset-0 bg-black transform translate-x-4 translate-y-4 -z-10" />
+
+              {/* Interior Page (visible after cover flips) */}
+              <div className="absolute inset-0 bg-amber-50 border-8 border-black overflow-hidden">
+                <div
+                  className={`w-full h-full relative ${animating ? "interior-expand-animate" : ""}`}
+                  style={{
+                    transformOrigin: "center center",
+                    transform: "scale(0.45)",
+                  }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-200 via-red-200 to-blue-200" />
+
+                  <div className="absolute inset-0 overflow-hidden">
+                    {[...Array(16)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="absolute top-1/2 left-1/2 w-1 h-full bg-black opacity-5"
+                        style={{
+                          transform: `rotate(${i * 22.5}deg)`,
+                          transformOrigin: "top center",
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Interior hero preview — larger text so it reads well during dive */}
+                  <div className="relative h-full flex flex-col items-center justify-center p-8">
+                    <div className="inline-block bg-yellow-300 border-4 border-black px-6 py-2 transform -rotate-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-6">
+                      <p className="text-sm md:text-base font-black uppercase tracking-widest">Issue #1</p>
+                    </div>
+
+                    <h1 className="text-6xl md:text-8xl font-black mb-4 italic transform -skew-y-2">
+                      <span className="inline-block text-stroke-3 text-white drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
+                        GABE
+                      </span>
+                      <br />
+                      <span className="inline-block text-stroke-3 text-red-600 drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
+                        MEREDITH
+                      </span>
+                    </h1>
+
+                    <div className="inline-block bg-white border-4 border-black px-6 py-3 transform rotate-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-4">
+                      <p className="text-base md:text-lg font-bold uppercase tracking-wide">
+                        Origin Story: CS @ Cornell
+                      </p>
+                    </div>
+
+                    <div className="max-w-md">
+                      <div className="bg-white border-4 border-black rounded-3xl px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <p className="font-comic text-base md:text-lg font-bold text-center">
+                          &ldquo;Every great developer has an origin story...&rdquo;
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Book Front Cover */}
+              <div
+                className={`absolute inset-0 w-full h-full bg-gradient-to-br from-red-500 via-yellow-400 to-blue-500 border-8 border-black ${animating ? "cover-open-animate" : "glow-animated"}`}
+                style={{
+                  transformStyle: "preserve-3d",
+                  backfaceVisibility: "hidden",
+                  transformOrigin: "left center",
+                }}
+              >
+                {/* Comic book dots texture */}
+                <div
+                  className="absolute inset-0 opacity-10"
+                  style={{
+                    backgroundImage: `radial-gradient(circle, black 2px, transparent 2px)`,
+                    backgroundSize: "15px 15px",
+                  }}
+                />
+
+                {/* Inner border */}
+                <div className="absolute inset-3 md:inset-4 border-4 border-black" />
+
+                {/* Diagonal speed lines across cover */}
+                <div className="absolute inset-0 overflow-hidden opacity-[0.07]">
+                  {[...Array(12)].map((_, i) => (
                     <div
                       key={i}
-                      className="absolute top-1/2 left-1/2 w-1 h-full bg-black opacity-5"
+                      className="absolute h-[200%] w-[2px] bg-black"
                       style={{
-                        transform: `rotate(${i * 22.5}deg)`,
-                        transformOrigin: 'top center'
+                        left: `${i * 9}%`,
+                        top: "-50%",
+                        transform: "rotate(25deg)",
                       }}
                     />
                   ))}
                 </div>
 
-                {/* Simplified hero content */}
-                <div className="relative h-full flex flex-col items-center justify-center p-4">
-                  <div className="inline-block bg-yellow-300 border-4 border-black px-4 py-1 transform -rotate-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-3">
-                    <p className="text-xs font-black uppercase tracking-widest">Issue #1</p>
+                {/* Content */}
+                <div className="relative h-full flex flex-col items-center justify-center p-5 md:p-8">
+                  {/* Top explosion badge */}
+                  <div className="relative mb-3 md:mb-4">
+                    <div className="badge-animated bg-yellow-300 border-4 border-black px-5 md:px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <p className="text-xs md:text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                        <Zap className="w-3 h-3 md:w-4 md:h-4" />
+                        Portfolio
+                        <Zap className="w-3 h-3 md:w-4 md:h-4" />
+                      </p>
+                    </div>
+                    {/* Larger starburst */}
+                    <div className="absolute inset-0 -z-10">
+                      {[...Array(12)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="absolute top-1/2 left-1/2 w-16 h-1 bg-yellow-400"
+                          style={{
+                            transform: `translate(-50%, -50%) rotate(${i * 30}deg)`,
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
 
-                  <h1 className="text-4xl md:text-5xl font-black mb-2 italic transform -skew-y-2">
-                    <span className="inline-block text-stroke-3 text-white drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                      GABE
-                    </span>
-                    <br />
-                    <span className="inline-block text-stroke-3 text-red-600 drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-                      MEREDITH
-                    </span>
-                  </h1>
-
-                  <div className="inline-block bg-white border-4 border-black px-4 py-2 transform rotate-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                    <p className="text-xs font-bold uppercase tracking-wide">
-                      Origin Story: CS @ Cornell
-                    </p>
+                  {/* Main Title with shimmer */}
+                  <div className="text-center mb-3 md:mb-4">
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase leading-none mb-1 md:mb-2">
+                      <span className="inline-block text-stroke-3 text-white drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
+                        GABRIEL
+                      </span>
+                    </h1>
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-black uppercase leading-none">
+                      <span className="inline-block text-stroke-3 text-yellow-300 drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
+                        MEREDITH
+                      </span>
+                    </h1>
                   </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Book Front Cover (flips open) */}
-            <div className={`absolute inset-0 w-full h-full bg-gradient-to-br from-red-500 via-yellow-400 to-blue-500 border-8 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] ${animating ? 'cover-open-animate' : ''}`} style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}>
-              {/* Comic book dots texture */}
-              <div 
-                className="absolute inset-0 opacity-10"
-                style={{
-                  backgroundImage: `radial-gradient(circle, black 2px, transparent 2px)`,
-                  backgroundSize: '15px 15px'
-                }}
-              />
-
-              {/* Inner border - comic style */}
-              <div className="absolute inset-4 border-4 border-black" />
-
-              {/* Content */}
-              <div className="relative h-full flex flex-col items-center justify-center p-6 md:p-8">
-                {/* Top explosion badge */}
-                <div className="relative mb-4">
-                  <div className="bg-yellow-300 border-4 border-black px-6 py-2 transform -rotate-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                    <p className="text-xs md:text-sm font-black uppercase tracking-widest">Portfolio</p>
-                  </div>
-                  {/* Starburst behind badge */}
-                  <div className="absolute inset-0 -z-10">
-                    {[...Array(8)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute top-1/2 left-1/2 w-12 h-1 bg-yellow-400"
-                        style={{
-                          transform: `translate(-50%, -50%) rotate(${i * 45}deg)`,
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* Main Title - Professional Comic Book Style */}
-                <div className="text-center mb-4">
-                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-black uppercase leading-none mb-2">
-                    <span className="inline-block text-stroke-3 text-white drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
-                      GABRIEL
-                    </span>
-                  </h1>
-                  <h1 className="text-6xl md:text-7xl lg:text-8xl font-black uppercase leading-none">
-                    <span className="inline-block text-stroke-3 text-yellow-300 drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
-                      MEREDITH
-                    </span>
-                  </h1>
-                </div>
-
-                {/* Subtitle with comic burst */}
-                <div className="relative mb-4">
-                  <div className="bg-white border-4 border-black px-6 py-2 transform rotate-1 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                    <p className="text-base md:text-xl font-black uppercase tracking-wide">
-                      Computer Science @ Cornell
-                    </p>
-                  </div>
-                </div>
-
-                {/* Issue badge */}
-                <div className="relative mb-4">
-                  <div className="bg-blue-500 border-4 border-black px-6 py-2 transform -rotate-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                    <p className="font-black text-white text-sm md:text-lg uppercase italic">
-                      Developer • Problem Solver
-                    </p>
-                  </div>
-                </div>
-
-                {/* Author credit box */}
-                <div className="bg-red-500 border-4 border-black px-5 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform rotate-1">
-                  <p className="font-black text-white text-xs md:text-sm uppercase tracking-wider">
-                    Issue #001 • 2025
-                  </p>
-                </div>
-
-                {/* Click instruction with arrow */}
-                {!animating && (
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 animate-bounce z-10">
-                    <div className="bg-yellow-300 border-4 border-black px-4 py-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                      <p className="font-black uppercase text-xs flex items-center gap-2">
-                        <span>Click to Read</span>
-                        <span className="text-lg">→</span>
+                  {/* Subtitle */}
+                  <div className="relative mb-3 md:mb-4">
+                    <div className="bg-white border-4 border-black px-5 md:px-6 py-2 transform rotate-1 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                      <p className="text-sm md:text-xl font-black uppercase tracking-wide flex items-center gap-2">
+                        <Star className="w-4 h-4 md:w-5 md:h-5 text-yellow-500" />
+                        Computer Science @ Cornell
+                        <Star className="w-4 h-4 md:w-5 md:h-5 text-yellow-500" />
                       </p>
                     </div>
                   </div>
-                )}
 
-                {/* Comic corner badges */}
-                <div className="absolute top-2 left-2 bg-red-500 border-2 border-black w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transform -rotate-12">
-                  <span className="font-black text-white text-lg md:text-xl">#1</span>
-                </div>
-                <div className="absolute top-2 right-2 bg-yellow-300 border-2 border-black px-2 py-1 transform rotate-12">
-                  <span className="font-black text-xs uppercase">New</span>
+                  {/* Issue badge */}
+                  <div className="relative mb-3 md:mb-4">
+                    <div className="bg-blue-500 border-4 border-black px-5 md:px-6 py-2 transform -rotate-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <p className="font-black text-white text-xs md:text-lg uppercase italic">
+                        Developer &bull; Problem Solver
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Author credit */}
+                  <div className="bg-red-500 border-4 border-black px-4 md:px-5 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform rotate-1">
+                    <p className="font-black text-white text-xs md:text-sm uppercase tracking-wider">
+                      Issue #001 &bull; 2025
+                    </p>
+                  </div>
+
+                  {/* Click instruction — more prominent */}
+                  {!animating && (
+                    <div className="absolute bottom-3 md:bottom-4 left-1/2 transform -translate-x-1/2 animate-bounce z-10">
+                      <div className="bg-yellow-300 border-4 border-black px-5 py-2 md:px-6 md:py-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                        <p className="font-black uppercase text-xs md:text-sm flex items-center gap-2">
+                          <span className="inline-block animate-pulse">&#9758;</span>
+                          <span>Click to Read</span>
+                          <span className="text-lg">&rarr;</span>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Corner badges */}
+                  <div className="absolute top-2 left-2 bg-red-500 border-2 border-black w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center transform -rotate-12 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <span className="font-black text-white text-lg md:text-2xl">#1</span>
+                  </div>
+                  <div className="absolute top-2 right-2 bg-yellow-300 border-2 border-black px-2 py-1 md:px-3 md:py-1 transform rotate-12 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    <span className="font-black text-xs md:text-sm uppercase">New!</span>
+                  </div>
+                  {/* Bottom corner accents */}
+                  <div className="absolute bottom-2 left-2 hidden md:flex items-center gap-1">
+                    <div className="w-3 h-3 bg-white border-2 border-black rounded-full" />
+                    <div className="w-2 h-2 bg-white border-2 border-black rounded-full" />
+                    <div className="w-1.5 h-1.5 bg-white border-2 border-black rounded-full" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -368,10 +578,10 @@ export default function Portfolio() {
 
       <div className="min-h-screen bg-amber-50 relative">
         {/* Comic Book Paper Texture Overlay */}
-        <div 
+        <div
           className="fixed inset-0 pointer-events-none z-0 opacity-20"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.3'/%3E%3C/svg%3E")`
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.3'/%3E%3C/svg%3E")`,
           }}
         />
 
@@ -395,10 +605,9 @@ export default function Portfolio() {
                   <a
                     key={item}
                     href={`#${item.toLowerCase()}`}
-                    className="text-black hover:text-red-600 transition-colors uppercase tracking-wider text-sm relative group"
+                    className="nav-link text-black hover:text-red-600 transition-colors uppercase tracking-wider text-sm relative"
                   >
                     {item}
-                    <span className="absolute -bottom-1 left-0 w-0 h-1 bg-red-600 group-hover:w-full transition-all duration-300" />
                   </a>
                 ))}
               </div>
@@ -406,41 +615,85 @@ export default function Portfolio() {
           </div>
         </nav>
 
-        {/* Cover Page / Hero */}
-        <section className="min-h-screen flex items-center justify-center px-6 pt-24 pb-12 relative">
+        {/* Cover Page / Hero — fills viewport edge-to-edge */}
+        <section className="min-h-screen flex items-center justify-center px-0 pt-20 pb-0 relative overflow-hidden">
+          {/* Full-bleed gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-yellow-200 via-red-200 to-blue-200" />
-          
-          <div className="absolute inset-0 flex items-center justify-center opacity-10">
-            <div className="w-[800px] h-[800px] rounded-full border-[60px] border-black animate-pulse" />
+
+          {/* Animated speed lines behind hero */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute top-1/2 left-1/2 bg-black opacity-[0.04]"
+                style={{
+                  width: i % 3 === 0 ? "2px" : "1px",
+                  height: "150%",
+                  transform: `rotate(${i * 18}deg)`,
+                  transformOrigin: "top center",
+                }}
+              />
+            ))}
           </div>
 
-          <div className="relative z-10 text-center max-w-4xl">
-            <div className="mb-8">
-              <div className="inline-block bg-yellow-300 border-4 border-black px-8 py-2 transform -rotate-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                <p className="text-sm font-black uppercase tracking-widest">Issue #1</p>
+          {/* Parallax decorative elements */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="parallax-slow absolute top-[10%] left-[5%] w-20 h-20 border-4 border-red-400/30 rounded-full" />
+            <div className="parallax-fast absolute top-[25%] right-[8%] w-10 h-10 bg-blue-400/20 rotate-45" />
+            <div className="parallax-slow absolute bottom-[20%] right-[12%] w-16 h-16 border-4 border-yellow-500/30" />
+            <div className="parallax-fast absolute bottom-[30%] left-[10%] w-8 h-8 bg-red-400/15 rounded-full" />
+          </div>
+
+          {/* Large pulsing circle */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-[0.06]">
+            <div className="w-[900px] h-[900px] rounded-full border-[80px] border-black animate-pulse" />
+          </div>
+
+          {/* Comic-style decorative corners */}
+          <div className="absolute top-24 left-4 md:left-8 hidden md:block">
+            <div className="float-animated bg-yellow-300 border-3 border-black px-3 py-1 font-bangers text-base tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform -rotate-12" style={{ "--float-rot": "-12deg" } as React.CSSProperties}>
+              WOW!
+            </div>
+          </div>
+          <div className="absolute top-32 right-4 md:right-8 hidden md:block">
+            <div className="float-animated bg-red-500 text-white border-3 border-black px-3 py-1 font-bangers text-base tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transform rotate-6" style={{ "--float-rot": "6deg", animationDelay: "1s" } as React.CSSProperties}>
+              AMAZING!
+            </div>
+          </div>
+
+          <div className="relative z-10 text-center max-w-5xl w-full px-6">
+            <div className="hero-badge mb-6 md:mb-8">
+              <div className="inline-block bg-yellow-300 border-4 border-black px-8 md:px-10 py-2 md:py-3 transform -rotate-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <p className="text-sm md:text-base font-black uppercase tracking-widest flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  Issue #1
+                  <Zap className="w-4 h-4" />
+                </p>
               </div>
             </div>
 
-            <h1 className="text-7xl md:text-9xl font-black mb-6 italic transform -skew-y-2">
-              <span className="inline-block text-stroke-3 text-white drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
+            <h1 className="text-8xl md:text-[10rem] lg:text-[12rem] font-black mb-4 md:mb-6 italic transform -skew-y-2 leading-[0.85]">
+              <span className="hero-name inline-block text-stroke-3 text-white drop-shadow-[8px_8px_0px_rgba(0,0,0,1)]">
                 GABE
               </span>
               <br />
-              <span className="inline-block text-stroke-3 text-red-600 drop-shadow-[6px_6px_0px_rgba(0,0,0,1)]">
+              <span className="hero-name inline-block text-stroke-3 text-red-600 drop-shadow-[8px_8px_0px_rgba(0,0,0,1)]">
                 MEREDITH
               </span>
             </h1>
 
-            <div className="inline-block bg-white border-4 border-black px-8 py-4 transform rotate-1 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-8">
-              <p className="text-2xl font-bold uppercase tracking-wide">
+            <div className="hero-subtitle inline-block bg-white border-4 border-black px-8 md:px-10 py-3 md:py-4 transform rotate-1 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] mb-6 md:mb-8">
+              <p className="text-xl md:text-2xl lg:text-3xl font-bold uppercase tracking-wide flex items-center gap-3">
+                <Star className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
                 Origin Story: CS @ Cornell
+                <Star className="w-5 h-5 md:w-6 md:h-6 text-yellow-500" />
               </p>
             </div>
 
-            <div className="relative inline-block mt-8 max-w-md mb-20">
-              <div className="bg-white border-4 border-black rounded-3xl px-8 py-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                <p className="font-comic text-xl font-bold">
-                  "Every great developer has an origin story..."
+            <div className="hero-bubble relative inline-block mt-6 md:mt-8 max-w-lg mb-16 md:mb-20">
+              <div className="bg-white border-4 border-black rounded-3xl px-8 md:px-10 py-6 md:py-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <p className="font-comic text-xl md:text-2xl font-bold">
+                  &ldquo;Every great developer has an origin story...&rdquo;
                 </p>
               </div>
               <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
@@ -449,7 +702,7 @@ export default function Portfolio() {
               </div>
             </div>
 
-            <div className="mt-12 flex justify-center animate-bounce">
+            <div className="hero-chevron mt-8 md:mt-12 flex justify-center animate-bounce">
               <div className="bg-yellow-300 border-4 border-black rounded-full p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <ChevronDown className="w-8 h-8" />
               </div>
@@ -458,23 +711,24 @@ export default function Portfolio() {
         </section>
 
         {/* Panel 1 - The Beginning */}
-        <section 
-          id="story"
-          data-panel="0"
-          className={`min-h-screen px-6 py-20 transition-all duration-1000 ${
-            visiblePanels.includes(0) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
-          }`}
-        >
+        <section id="story" className="min-h-screen px-6 py-20 relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="parallax-fast absolute top-[10%] right-[5%] w-6 h-6 bg-red-400 rounded-full opacity-15" />
+            <div className="parallax-slow absolute bottom-[20%] left-[5%] w-10 h-10 border-4 border-blue-400 rotate-12 opacity-15" />
+          </div>
+
           <div className="max-w-6xl mx-auto">
             <div className="bg-white border-8 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-2">
-              <div className="bg-red-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4">
-                <h2 className="text-white text-3xl font-black uppercase tracking-wider text-center">
+              <div className="chapter-header bg-red-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4 flex items-center overflow-hidden">
+                <div className="line-left flex-1 h-1 bg-white/40 mr-4" />
+                <h2 className="chapter-title text-white text-3xl font-black uppercase tracking-wider text-center whitespace-nowrap">
                   Chapter One: The Early Days
                 </h2>
+                <div className="line-right flex-1 h-1 bg-white/40 ml-4" />
               </div>
 
               <div className="grid md:grid-cols-2 gap-6 p-6">
-                <div className="border-4 border-black bg-gradient-to-br from-blue-100 to-cyan-100 p-8 flex items-center justify-center relative overflow-hidden">
+                <div className="project-card border-4 border-black bg-gradient-to-br from-blue-100 to-cyan-100 p-8 flex items-center justify-center relative overflow-hidden">
                   <div className="absolute top-4 left-4 bg-yellow-300 border-2 border-black px-3 py-1 transform -rotate-6">
                     <p className="text-xs font-black uppercase">Panel 1</p>
                   </div>
@@ -485,19 +739,19 @@ export default function Portfolio() {
                   />
                 </div>
 
-                <div className="border-4 border-black bg-white p-6 space-y-4 relative">
+                <div className="project-card border-4 border-black bg-white p-6 space-y-4 relative">
                   <div className="bg-yellow-100 border-3 border-black p-4 italic">
                     <p className="font-comic text-sm leading-relaxed">
                       <strong className="block text-xs uppercase mb-1">Somewhere in New York...</strong>
-                      Growing up, I was always fascinated by how things worked. Not just physically, but logically. 
+                      Growing up, I was always fascinated by how things worked. Not just physically, but logically.
                       How do computers think? How do algorithms solve problems? How can we teach machines to learn?
                     </p>
                   </div>
 
                   <div className="relative mt-6">
-                    <div className="bg-white border-3 border-black rounded-2xl px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <div className="speech-bubble bg-white border-3 border-black rounded-2xl px-6 py-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                       <p className="font-comic font-bold">
-                        "I'm a Computer Science student at Cornell University and a data engineer with the Cornell Algorithmic Trading Club, focused on software engineering at the intersection of systems, data, and applied AI. I build scalable, performance-driven tools for real-world decision-making and research."
+                        &ldquo;I&rsquo;m a Computer Science student at Cornell University and a data engineer with the Cornell Algorithmic Trading Club, focused on software engineering at the intersection of systems, data, and applied AI. I build scalable, performance-driven tools for real-world decision-making and research.&rdquo;
                       </p>
                     </div>
                   </div>
@@ -529,26 +783,29 @@ export default function Portfolio() {
         </section>
 
         {/* Panel 2 - The Projects */}
-        <section 
-          id="projects"
-          data-panel="1"
-          className={`min-h-screen px-6 py-20 transition-all duration-1000 delay-200 ${
-            visiblePanels.includes(1) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
-          }`}
-        >
+        <section id="projects" className="min-h-screen px-6 py-20 relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="parallax-slow absolute top-[5%] left-[8%] w-14 h-14 border-4 border-yellow-500 rounded-full opacity-15" />
+            <div className="parallax-fast absolute bottom-[15%] right-[8%] w-8 h-8 bg-indigo-400 rotate-45 opacity-15" />
+          </div>
+
           <div className="max-w-6xl mx-auto">
             <div className="bg-white border-8 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-2">
-              <div className="bg-blue-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4">
-                <h2 className="text-white text-3xl font-black uppercase tracking-wider text-center">
+              <div className="chapter-header bg-blue-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4 flex items-center overflow-hidden">
+                <div className="line-left flex-1 h-1 bg-white/40 mr-4" />
+                <h2 className="chapter-title text-white text-3xl font-black uppercase tracking-wider text-center whitespace-nowrap">
                   Chapter Two: The Adventures
                 </h2>
+                <div className="line-right flex-1 h-1 bg-white/40 ml-4" />
               </div>
 
               <div className="grid md:grid-cols-2 gap-6 p-6">
                 {projects.map((project, i) => (
                   <div
                     key={project.title}
-                    className="border-4 border-black bg-white p-6 relative transition-all duration-300 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2"
+                    className="project-card border-4 border-black bg-white p-6 relative transition-all duration-300 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2"
+                    onMouseMove={tilt.onMouseMove}
+                    onMouseLeave={tilt.onMouseLeave}
                   >
                     <div className="absolute -top-6 -left-6 bg-yellow-300 border-3 border-black w-12 h-12 rounded-full flex items-center justify-center font-black text-xl transform -rotate-12 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                       {i + 1}
@@ -592,42 +849,43 @@ export default function Portfolio() {
         </section>
 
         {/* Panel 3 - The Skills */}
-        <section 
-          id="skills"
-          data-panel="2"
-          className={`min-h-screen px-6 py-20 transition-all duration-1000 delay-300 ${
-            visiblePanels.includes(2) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
-          }`}
-        >
+        <section id="skills" className="min-h-screen px-6 py-20 relative overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="parallax-fast absolute top-[8%] left-[12%] w-10 h-10 border-4 border-emerald-400 rounded-full opacity-15" />
+            <div className="parallax-slow absolute bottom-[10%] right-[6%] w-6 h-6 bg-cyan-400 rotate-12 opacity-15" />
+          </div>
+
           <div className="max-w-6xl mx-auto">
             <div className="bg-white border-8 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-2">
-              <div className="bg-emerald-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4">
-                <h2 className="text-white text-3xl font-black uppercase tracking-wider text-center">
+              <div className="chapter-header bg-emerald-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4 flex items-center overflow-hidden">
+                <div className="line-left flex-1 h-1 bg-white/40 mr-4" />
+                <h2 className="chapter-title text-white text-3xl font-black uppercase tracking-wider text-center whitespace-nowrap">
                   Chapter Three: The Arsenal
                 </h2>
+                <div className="line-right flex-1 h-1 bg-white/40 ml-4" />
               </div>
 
               <div className="p-6 pb-0">
                 <div className="relative max-w-2xl mx-auto mb-8">
-                  <div className="bg-white border-4 border-black rounded-full px-8 py-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="speech-bubble bg-white border-4 border-black rounded-full px-8 py-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                     <p className="font-comic font-bold text-center italic">
-                      "Every hero needs their tools and powers..."
+                      &ldquo;Every hero needs their tools and powers...&rdquo;
                     </p>
                   </div>
                   <div className="absolute -bottom-6 left-1/4">
-                    <div className="w-6 h-6 bg-white border-3 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" />
+                    <div className="speech-dot w-6 h-6 bg-white border-3 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" />
                   </div>
                   <div className="absolute -bottom-10 left-1/4 -ml-4">
-                    <div className="w-4 h-4 bg-white border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" />
+                    <div className="speech-dot w-4 h-4 bg-white border-2 border-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" />
                   </div>
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
-                {skillCategories.map((category, i) => (
+              <div className="skill-grid grid md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
+                {skillCategories.map((category) => (
                   <div
                     key={category.title}
-                    className="border-4 border-black bg-white p-6 space-y-4 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all"
+                    className="skill-card border-4 border-black bg-white p-6 space-y-4 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all"
                   >
                     <div className="flex items-center gap-3 border-b-4 border-black pb-3">
                       <div className={`${category.color} bg-black p-2 border-2 border-black`}>
@@ -640,9 +898,9 @@ export default function Portfolio() {
                       {category.skills.map((skill) => (
                         <div
                           key={skill}
-                          className="bg-yellow-100 border-2 border-black px-3 py-2 text-sm font-bold transform hover:translate-x-1 transition-transform"
+                          className="skill-item bg-yellow-100 border-2 border-black px-3 py-2 text-sm font-bold transform hover:translate-x-1 transition-transform"
                         >
-                          • {skill}
+                          &bull; {skill}
                         </div>
                       ))}
                     </div>
@@ -654,33 +912,37 @@ export default function Portfolio() {
         </section>
 
         {/* Final Panel - Contact */}
-        <section 
+        <section
           id="contact"
-          data-panel="3"
-          className={`min-h-screen px-6 py-20 flex items-center justify-center transition-all duration-1000 delay-400 ${
-            visiblePanels.includes(3) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20"
-          }`}
+          className="contact-section min-h-screen px-6 py-20 flex items-center justify-center relative overflow-hidden"
         >
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="parallax-slow absolute top-[12%] right-[10%] w-12 h-12 border-4 border-red-400 rotate-45 opacity-15" />
+            <div className="parallax-fast absolute bottom-[20%] left-[8%] w-8 h-8 bg-blue-400 rounded-full opacity-15" />
+          </div>
+
           <div className="max-w-4xl mx-auto w-full">
             <div className="bg-white border-8 border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-2">
-              <div className="bg-gradient-to-r from-red-600 to-blue-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4">
-                <h2 className="text-white text-3xl font-black uppercase tracking-wider text-center">
+              <div className="chapter-header bg-gradient-to-r from-red-600 to-blue-600 border-4 border-black px-4 py-2 -mt-6 -mx-6 mb-4 flex items-center overflow-hidden">
+                <div className="line-left flex-1 h-1 bg-white/40 mr-4" />
+                <h2 className="chapter-title text-white text-3xl font-black uppercase tracking-wider text-center whitespace-nowrap">
                   To Be Continued...
                 </h2>
+                <div className="line-right flex-1 h-1 bg-white/40 ml-4" />
               </div>
 
               <div className="p-8 text-center space-y-6">
                 <div className="relative inline-block max-w-2xl">
-                  <div className="bg-cyan-100 border-4 border-black rounded-3xl px-10 py-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="speech-bubble bg-cyan-100 border-4 border-black rounded-3xl px-10 py-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                     <p className="font-comic text-2xl font-bold mb-4">
-                      "Want to join the next chapter of this story?"
+                      &ldquo;Want to join the next chapter of this story?&rdquo;
                     </p>
                     <p className="font-comic text-lg">
-                      I'm always looking for new adventures, whether it's projects, opportunities, or just a good tech conversation!
+                      I&rsquo;m always looking for new adventures, whether it&rsquo;s projects, opportunities, or just a good tech conversation!
                     </p>
                   </div>
                   <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
-                    <div className="w-0 h-0 border-l-[25px] border-l-transparent border-t-[40px] border-t-black border-r-[25px] border-r-transparent" />
+                    <div className="speech-dot w-0 h-0 border-l-[25px] border-l-transparent border-t-[40px] border-t-black border-r-[25px] border-r-transparent" />
                     <div className="absolute top-0 left-1/2 transform -translate-x-1/2 translate-y-[-36px] w-0 h-0 border-l-[21px] border-l-transparent border-t-[36px] border-t-cyan-100 border-r-[21px] border-r-transparent" />
                   </div>
                 </div>
@@ -688,7 +950,9 @@ export default function Portfolio() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center pt-12">
                   <a
                     href="mailto:gabriel.b.meredith@gmail.com"
-                    className="bg-red-600 text-white border-4 border-black px-8 py-4 text-xl font-black uppercase hover:bg-red-700 transition-colors shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] inline-flex items-center justify-center gap-2"
+                    className="contact-cta bg-red-600 text-white border-4 border-black px-8 py-4 text-xl font-black uppercase hover:bg-red-700 transition-colors shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] inline-flex items-center justify-center gap-2"
+                    onMouseMove={magnetic.onMouseMove}
+                    onMouseLeave={magnetic.onMouseLeave}
                   >
                     <Mail className="w-6 h-6" />
                     Email Me
@@ -697,7 +961,9 @@ export default function Portfolio() {
                     href="https://github.com/gabemeredith"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-black text-white border-4 border-black px-8 py-4 text-xl font-black uppercase hover:bg-gray-800 transition-colors shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] inline-flex items-center justify-center gap-2"
+                    className="contact-cta bg-black text-white border-4 border-black px-8 py-4 text-xl font-black uppercase hover:bg-gray-800 transition-colors shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] inline-flex items-center justify-center gap-2"
+                    onMouseMove={magnetic.onMouseMove}
+                    onMouseLeave={magnetic.onMouseLeave}
                   >
                     <Github className="w-6 h-6" />
                     GitHub
@@ -706,7 +972,9 @@ export default function Portfolio() {
                     href="https://linkedin.com/in/gabriel-meredith"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-blue-600 text-white border-4 border-black px-8 py-4 text-xl font-black uppercase hover:bg-blue-700 transition-colors shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] inline-flex items-center justify-center gap-2"
+                    className="contact-cta bg-blue-600 text-white border-4 border-black px-8 py-4 text-xl font-black uppercase hover:bg-blue-700 transition-colors shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[6px] hover:translate-y-[6px] inline-flex items-center justify-center gap-2"
+                    onMouseMove={magnetic.onMouseMove}
+                    onMouseLeave={magnetic.onMouseLeave}
                   >
                     <Linkedin className="w-6 h-6" />
                     LinkedIn
@@ -714,7 +982,7 @@ export default function Portfolio() {
                 </div>
 
                 <div className="pt-8">
-                  <div className="inline-block bg-black text-white border-4 border-black px-6 py-3 transform rotate-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="end-badge inline-block bg-black text-white border-4 border-black px-6 py-3 transform rotate-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                     <p className="font-black uppercase tracking-widest">End of Issue #1</p>
                   </div>
                 </div>
@@ -727,7 +995,7 @@ export default function Portfolio() {
         <footer className="border-t-8 border-black bg-black text-white py-8 px-6 relative z-10">
           <div className="max-w-7xl mx-auto text-center">
             <p className="font-comic text-lg">
-              © 2025 Gabriel Meredith. Made with ❤️ and lots of ☕
+              &copy; 2025 Gabriel Meredith. Made with &#10084;&#65039; and lots of &#9749;
             </p>
             <p className="font-comic text-sm mt-2 opacity-70">
               Built with Next.js and Tailwind CSS
