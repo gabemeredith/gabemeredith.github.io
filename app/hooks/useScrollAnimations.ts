@@ -131,44 +131,39 @@ export function useScrollAnimations(ready: boolean) {
           })
         })
 
-        // --- Skill Cards ---
-        const skillGrid = document.querySelector(".skill-grid")
-        if (skillGrid) {
-          const cards = skillGrid.querySelectorAll<HTMLElement>(".skill-card")
-          const tl = gsap.timeline({
-            scrollTrigger: {
-              trigger: skillGrid,
-              start: "top 85%",
-              toggleActions: "play none none none",
-            },
-          })
-
-          tl.from(cards, {
+        // --- Skill Cards — each card triggers individually as you scroll ---
+        gsap.utils.toArray<HTMLElement>(".skill-card").forEach((card) => {
+          // Card entrance
+          gsap.from(card, {
             scale: 0.85,
             opacity: 0,
             y: 40,
             duration: 0.6,
-            stagger: 0.12,
             ease: "power2.out",
+            scrollTrigger: {
+              trigger: card,
+              start: "top 90%",
+              toggleActions: "play none none none",
+            },
           })
 
-          cards.forEach((card, i) => {
-            const items = card.querySelectorAll(".skill-item")
-            if (items.length) {
-              tl.from(
-                items,
-                {
-                  x: -20,
-                  opacity: 0,
-                  duration: 0.3,
-                  stagger: 0.05,
-                  ease: "power2.out",
-                },
-                `>-0.4`
-              )
-            }
-          })
-        }
+          // Skill items inside each card — scrub-linked so they fill in as you scroll
+          const items = card.querySelectorAll<HTMLElement>(".skill-item")
+          if (items.length) {
+            gsap.from(items, {
+              x: -20,
+              opacity: 0,
+              stagger: 0.15,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: card,
+                start: "top 80%",
+                end: "bottom 50%",
+                scrub: 0.5,
+              },
+            })
+          }
+        })
 
         // --- Speech Bubbles ---
         gsap.utils.toArray<HTMLElement>(".speech-bubble").forEach((bubble) => {
